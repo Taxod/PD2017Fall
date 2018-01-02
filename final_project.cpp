@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <conio.h>
 #include <time.h>
-
+#include <cstring>
 using namespace std ;
 
 
@@ -101,7 +101,7 @@ void move_snack()
 }
 
 
-void Clr()
+void Clr()//清除頁面 
 {
         COORD coordScreen = { 0, 0 }; 
         DWORD cCharsWritten; 
@@ -148,7 +148,7 @@ void init()
 }
 char name[101] = {0};
 
-void gameover(){
+void gameover(){//結束遊戲頁面 
 	Clr();
 	draw (20,8,name);
 	draw (14,10,"G a m e    O v e r");
@@ -158,10 +158,8 @@ void gameover(){
 //    cout << name;
 //    cout << score;         最後顯示成績 
 }
-int main ()
-{
-//    printf("\n\n\n\n\n\n\n            snake           \n\n\n\n\n\n\n\n");
-    srand (time(0));
+void first_page(){
+	srand (time(0));
     hOut = GetStdHandle (STD_OUTPUT_HANDLE);
     hIn  = GetStdHandle (STD_INPUT_HANDLE);
     HANDLE err = INVALID_HANDLE_VALUE;
@@ -173,21 +171,52 @@ int main ()
 	gotoxy (0,0);
 	draw (14,10,"Snake");
 	draw (14,20,"Enter your name:");
-    
     cin.getline(name,101);
     Clr();
-    init();
-    Sleep(delay_time);
-    // Clr();
-    while (!bExit)
-    {        
-        Sleep (delay_time); if (kbhit()) key_control();//kbhit檢查使用者是否輸入東西
-        draw (cookie.x, cookie.y, "◎");
-        move_snack();
-        Sleep (delay_time); if (kbhit()) key_control();            
-        gotoxy (10,24);
-//        printf ("cookie: (%2d,%2d)  head: (%2d,%2d)",
-//            cookie.x, cookie.y, body[0].x, body[0].y);
+}
+int main ()
+{
+//	FILE *fPtr;
+	FILE *fin,*fout;
+//    char c1[20],c3[10], c5[20],c7[20];
+    char c[5][20] = {0};
+    int s[5]; 
+    fin = fopen("score.txt", "r");
+    if (!fin) {
+        printf("T_T\n");
+        return 0;
     }
+    fscanf(fin, "%s%d%s%d%s%d%s%d",c[0],&s[0],c[1],&s[1],c[2],&s[2],c[3],&s[3]);
+ 
+    printf("%s %d\n%s %d\n%s %d\n%s %d\n",c[0],s[0],c[1],s[1],c[2],s[2],c[3],s[3]);
+    
+	fclose(fin);
+	cout << "--------------\n";
+	s[0] = 0;
+	fout = fopen("score.txt","w");
+
+	fprintf(fout,"%s %d\n%s %d\n%s %d\n%s %d\n",c[0],s[0],c[1],s[1],c[2],s[2],c[3],s[3]);
+
+	fclose(fout);
+	fin = fopen("score.txt", "r");
+    if (!fin) {
+        printf("T_T\n");
+        return 0;
+    }
+    fscanf(fin, "%s%d%s%d%s%d%s%d",c[0],&s[0],c[1],&s[1],c[2],&s[2],c[3],&s[3]);
+ 
+    printf("%s %d\n%s %d\n%s %d\n%s %d\n",c[0],s[0],c[1],s[1],c[2],s[2],c[3],s[3]);
+    
+	fclose(fin);
+//    first_page();
+//    init();
+//    while (!bExit)
+//    {        
+//        Sleep (delay_time); if (kbhit()) key_control();//kbhit檢查使用者是否輸入東西
+//        draw (cookie.x, cookie.y, "◎");
+//        move_snack();
+//        Sleep (delay_time); if (kbhit()) key_control();            
+//        gotoxy (10,24);
+//    }
     return 0;
 }
