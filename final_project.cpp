@@ -15,6 +15,7 @@ int score = 0; // default score
 void gameover();//結束遊戲
 void Leaderboard(char c[][NAME_LEN],int s[]); // 製作排行榜
 void Clr();//清除頁面
+void first_page();//第一頁
 // -----------------------------
 const int N = 23;
 
