@@ -1,288 +1,302 @@
-#include<iostream>
-#include<cstring>
-#include<stdlib.h>
-using namespace std;
+#include <time.h>
+#include <map>
+#include <vector>
+#include <algorithm>
+#include <string>
+#include <iostream>
  
-class MyString
-{
-    private:
-        int len;
-        char* str;
-    public:
-        MyString();
-//      friend main();
-        MyString(char* c);
-        MyString(const MyString& c);
-        ~MyString();
-         
-        int length();
-        int find(char ch, int pos = 1);
-        void assign(const char* st);
-        void assign(MyString mStr);
-        char* getStr();
-        void print();
-         
-        char* name;
-        void setname(char* c);
+const std::string s = "CDHS", v = "A23456789TJQK";
+const int handCards = 9, drawCards = 3;
  
-};
-MyString::MyString(){
-    len = 0;
-    str = nullptr;
-}
-MyString::MyString(char* c){
-    len = strlen(c);
-    str = new char[len+1];
-    strcpy(str, c);
-}
-MyString::MyString(const MyString& c){
-    len = strlen(c.str);
-    str = new char[len+1];
-    strcpy(str, c.str);
-//    name = c.name;
-}
-MyString::~MyString(){
-    delete [] str;
-    delete [] name;
-}
-int MyString::length(){
-    return strlen(str);
-}
-int MyString::find(char ch, int pos /*= 1*/){
-    char* ptr = nullptr;
-    pos --;
-    ptr = strchr(&str[pos],ch);
-    if(ptr == nullptr){
-        return 0;
-    }else{
-        return (ptr-str)+1;
+class card {
+public:
+    friend std::ostream& operator<< (std::ostream& os, const card& c ) { 
+        os << v[c.val] << s[c.suit]; 
+        return os;
     }
-}
-//void MyString::assign(const char* st){
-//	int mylen = len;
-//	len = strlen(st);
-////	cout << len <<"*\n";
-//	if(len > mylen){
-//		delete [] str;
-//		str = new char [len+1];
-//	}
-//	strcpy(str,st);
-////	str[len] = '\0';
-//}
-//void MyString::assign(MyString mStr){
-//	int mylen = len;
-//	len = mStr.len;
-////	cout << len <<"*\n";
-//	if(len > mylen){
-//		delete [] str;
-//		str = new char [len+1];
-//		strcpy(str,mStr.getStr());
-//	}
-//	else{
-//		strcpy(str,mStr.getStr());
-//	}
-////	str[len] = '\0';
-//	
-//}
-void MyString::assign(const char* st){
-    len = strlen(st);
-    delete [ ] str;
-    str = new char [len+1];
-    strcpy(str,st);
-}
-void MyString::assign(MyString mStr){
-    len = strlen(mStr.getStr());
-    delete [ ] str;
-    str = new char [len+1];
-    strcpy(str,mStr.getStr());
-}
-char* MyString::getStr(){
-    return str;
-}
-void MyString::print(){
-    cout << str;
-}
-void MyString::setname(char* c){
-    len = strlen(c);
-    name = new char[len+1];
-    strcpy(name, c);
-}
+    bool isValid()                       { return val > -1; }
+    void set( char s, char v )           { suit = s; val = v; }
+    char getRank()                       { return v[val]; }
+    bool operator == ( const char o )    { return v[val] == o; }
+    bool operator < ( const card& a )    { if( val == a.val ) return suit < a.suit; return val < a.val; }
+private:
+    char                                 suit, val;
+};
+class deck {
+public:
+    static deck* instance() {
+        if( !inst ) inst = new deck();
+        return inst;
+    }
+    void destroy() {
+        delete inst;
+        inst = 0;
+    }
+    card draw() {
+        card c;
+        if( cards.size() > 0 ) { 
+            c = cards.back();
+            cards.pop_back();
+            return c; 
+        }
+        c.set( -1, -1 );
+        return c;
+    }
+private:
+    deck() { 
+        newDeck(); 
+    }
+    void newDeck() {
+        card c; 
+        for( char s = 0; s < 4; s++ ) {
+            for( char v = 0; v < 13; v++ ) {
+                c.set( s, v ); 
+                cards.push_back( c ); 
+            }
+        }
+        random_shuffle( cards.begin(), cards.end() );
+        random_shuffle( cards.begin(), cards.end() );
+    }
+    static deck* inst;
+    std::vector<card> cards;
+};
+class player {
+public:
+    player( std::string n ) : nm( n ) { 
+        for( int x = 0; x < handCards; x++ )
+            hand.push_back( deck::instance()->draw() );
+        sort( hand.begin(), hand.end() );  
+    }
+    void outputHand() { 
+        for( std::vector<card>::iterator x = hand.begin(); x != hand.end(); x++ ) 
+            std::cout << ( *x ) << " ";
+        std::cout << "\n"; 
+    }
+    bool addCard( card c ) { 
+        hand.push_back( c );
+        return checkForBook();
+    }
+    std::string name() { 
+        return nm; 
+    }
+    bool holds( char c ) { 
+        return( hand.end() != find( hand.begin(), hand.end(), c ) ); 
+    }
+    card takeCard( char c ) {
+        std::vector<card>::iterator it = find( hand.begin(), hand.end(), c );
+        std::swap( ( *it ), hand.back() );
+        card d = hand.back();
+        hand.pop_back();
+        hasCards();
+        sort( hand.begin(), hand.end() ); 
+        return d;
+    }
+    size_t getBooksCount() {
+        return books.size();
+    }
+    void listBooks() {
+        for( std::vector<char>::iterator it = books.begin(); it != books.end(); it++ )
+            std::cout << ( *it ) << "'s ";
+        std::cout << "\n";
+    }
+    bool checkForBook() {
+        bool ret = false;
+        std::map<char, int> countMap;
+        for( std::vector<card>::iterator it = hand.begin(); it != hand.end(); it++ )
+            countMap[( *it ).getRank()]++;
+        for( std::map<char, int>::iterator it = countMap.begin(); it != countMap.end(); it++ ) {
+            if( ( *it ).second == 4 ) {
+                do {
+                    takeCard( ( *it ).first );
+                } while( holds( ( *it ).first ) );
+                books.push_back( ( *it ).first );
+                ( *it ).second = 0;
+                ret = true;
+            }
+        }
+        sort( hand.begin(), hand.end() );
+        return ret;
+    }
+    bool hasCards() {
+        if( hand.size() < 1 ) {
+            card c;
+            for( int x = 0; x < drawCards; x++ ) {
+                c = deck::instance()->draw();
+                if( c.isValid() ) addCard( c );
+                else break;
+            }
+        }
+        return( hand.size() > 0 );
+    }
+protected:
+    std::string nm; 
+    std::vector<card> hand;
+    std::vector<char> books;
+};
+class aiPlayer : public player {
+public:
+    aiPlayer( std::string n ) : player( n ), askedIdx( -1 ), lastAsked( 0 ), nextToAsk( -1 ) { }
+    void rememberCard( char c ) {
+        if( asked.end() != find( asked.begin(), asked.end(), c ) || !asked.size() )
+            asked.push_back( c );  
+    }
+    char makeMove() {
+        if( askedIdx < 0 || askedIdx >= static_cast<int>( hand.size() ) ) {
+            askedIdx = rand() % static_cast<int>( hand.size() );
+        }
  
- 
-static int count = 0;
-MyString do_declare(char* target);
-MyString do_copy(char* target,MyString* p[],const int count);
-void do_length(char* target,MyString* p[],const int count);
-void do_find(char* target,MyString* p[],const int count);
-void do_assignString(char* target,MyString* p[],const int count);
-void do_assignObject(char* target,MyString* p[],const int count);
-void do_print(char* target,MyString* p[],const int count);
- 
- 
-void split(char* target,char s[][53],char delim[]);
-void split(char* target,char s2[][22],char delim[]);
- 
- 
-int main(){
-    int n = 0;
-    cin >> n;
-    char trash[2] = {0};
-    cin.getline(trash,2);
-     
-    char c[101] = {0};
-    MyString* p[100] = {0};
-//  int count = 0;
-    for(int i = 0 ; i < n ; i++){
-        cin.getline(c,101);
-        if(strncmp(c,"declare ",7)==0){
-            p[count] = new MyString(do_declare(c));
-            count ++;
-        }else if(strncmp(c,"copy ",4)==0){
-            p[count] = new MyString(do_copy(c,p,count));
-            count++;
-        }else if(strncmp(c,"length ",6)==0){
-            do_length(c,p,count);
-        }else if(strncmp(c,"find ",4)==0){
-            do_find(c,p,count);
-        }else if(strncmp(c,"assignString ",12)==0){
-            do_assignString(c,p,count);
-        }else if(strncmp(c,"assignObject ",12)==0){
-            do_assignObject(c,p,count);
-        }else if(strncmp(c,"print ",5)==0){
-            do_print(c,p,count);
+        char c;
+        if( nextToAsk > -1 ) {
+            c = nextToAsk;
+            nextToAsk = -1;
+        } else {
+            while( hand[askedIdx].getRank() == lastAsked ) {
+                if( ++askedIdx == hand.size() ) {
+                    askedIdx = 0;
+                    break;
+                }
+            }
+            c = hand[askedIdx].getRank();
+            if( rand() % 100 > 25 && asked.size() ) {
+                for( std::vector<char>::iterator it = asked.begin(); it != asked.end(); it++ ) {
+		    if( holds( *it ) ) {
+			c = ( *it );
+			break;
+		    }
+		}
+            }
+        }
+        lastAsked = c;
+        return c;
+    }
+    void clearMemory( char c ) {
+        std::vector<char>::iterator it = find( asked.begin(), asked.end(), c );
+        if( asked.end() != it ) {
+            std::swap( ( *it ), asked.back() );
+            asked.pop_back();
         }
     }
+    bool addCard( card c ) {
+        if( !holds( c.getRank() ) )
+            nextToAsk = c.getRank();
+        return player::addCard( c );
+    }
+private:
+    std::vector<char> asked;
+    char nextToAsk, lastAsked;
+    int askedIdx;
+};
+class goFish {
+public:
+    goFish() {
+        plr = true; 
+        std::string n; 
+        std::cout << "Hi there, enter your name: "; std::cin >> n; 
+        p1 = new player( n ); 
+        p2 = new aiPlayer( "JJ" );
+    }
+    ~goFish() { 
+        if( p1 ) delete p1; 
+        if( p2 ) delete p2;
+        deck::instance()->destroy();
+    }
+    void play() {
+        while( true ) {
+            if( process( getInput() ) ) break;
+        }
+        std::cout << "\n\n";
+        showBooks();
+        if( p1->getBooksCount() > p2->getBooksCount() ) {
+            std::cout << "\n\n\t*** !!! CONGRATULATIONS !!! ***\n\n\n";
+        } else {
+            std::cout << "\n\n\t*** !!! YOU LOSE - HA HA HA !!! ***\n\n\n";
+        }
+    }
+private:
+    void showBooks() {
+        if( p1->getBooksCount() > 0 ) {
+            std::cout << "\nYour Book(s): ";
+            p1->listBooks();
+        }
+        if( p2->getBooksCount() > 0 ) {
+            std::cout << "\nMy Book(s): ";
+            p2->listBooks();
+        }
+    }
+    void showPlayerCards() {
+        std::cout << "\n\n" << p1->name() << ", these are your cards:\n";
+        p1->outputHand();
+        showBooks();
+    }
+    char getInput() {
+        char c;
+        if( plr ) {
+            if( !p1->hasCards() ) return -1;
+            showPlayerCards();
+            std::string w;
+            while( true ) {
+                std::cout << "\nWhat card(rank) do you want? "; std::cin >> w;
+                c = toupper( w[0] );
+                if( p1->holds( c ) ) break; 
+                std::cout << p1->name() << ", you can't ask for a card you don't have!\n\n"; 
+            }
+        } else {
+            if( !p2->hasCards() ) return -1;
+            c = p2->makeMove();
+            showPlayerCards();
+            std::string r;
+            std::cout << "\nDo you have any " << c << "'s? (Y)es / (G)o Fish ";
+            do {
+                std::getline( std::cin, r );
+                r = toupper( r[0] );
+            }
+            while( r[0] != 'Y' && r[0] != 'G' );
+            bool hasIt = p1->holds( c );
+            if( hasIt && r[0] == 'G' )
+                std::cout << "Are you trying to cheat me?! I know you do...\n";
+            if( !hasIt && r[0] == 'Y' )
+                std::cout << "Nooooo, you don't have it!!!\n";
+        }
+        return c;
+    }
+    bool process( char c ) {
+        if( c < 0 ) return true;
+        if( plr ) p2->rememberCard( c );
+ 
+        player *a, *b;
+        a = plr ? p2 : p1;
+        b = plr ? p1 : p2;
+        bool r;
+        if( a->holds( c ) ) {
+            while( a->holds( c ) ) {
+                r = b->addCard( a->takeCard( c ) );
+            }
+            if( plr && r )p2->clearMemory( c );
+        } else {
+            fish();
+            plr = !plr;
+        }
+        return false;
+    }
+    void fish() {
+        std::cout << "\n\n\t  *** GO FISH! ***\n\n";
+        card c = deck::instance()->draw();
+        if( plr ) {
+            std::cout << "Your new card: " << c << ".\n\n******** Your turn is over! ********\n" << std::string( 36, '-' ) << "\n\n";
+            if( p1->addCard( c ) ) p2->clearMemory( c.getRank() );
+        } else {
+            std::cout << "\n********* My turn is over! *********\n" << std::string( 36, '-' ) << "\n\n";
+            p2->addCard( c );
+        }
+    }
+ 
+    player        *p1;
+    aiPlayer    *p2;
+    bool        plr;
+};
+deck* deck::inst = 0;
+int main( int argc, char* argv[] ) {
+    srand( static_cast<unsigned>( time( NULL ) ) ); 
+    goFish f;  f.play(); 
     return 0;
 }
- 
- 
- 
-void do_print(char* target,MyString* p[],const int count){
-    char s [2][22] = {0};
-    char delim[] = " ";
-    split(target,s,delim);
-    for(int j = 0 ; j < count ; j++){
-        if(strcmp(p[j]->name,s[1]) == 0){
-            p[j]->print();
-            cout << endl;
-        }
-    }
-}
- 
- 
-void do_assignObject(char* target,MyString* p[],const int count){
-    char s [3][22] = {0};
-    char delim[] = " ";
-    split(target,s,delim);
-//    if(strcmp(s[1],s[2])==0){
-//    	
-//	}else{
-		for(int j = 0 ; j < count;j++){
-	        if(strcmp(p[j]->name,s[1])==0){
-	            for(int k = 0 ; k < count ; k++){
-	                if(strcmp(p[k]->name,s[2]) == 0){
-	                	char tmp[53];
-	                	strcpy(tmp, p[k]->getStr());
-	                    p[j]->assign(tmp);
-//						(*p[j]).assign(*p[k]);
-	                }
-	            }
-	        }
-    	}
-//	}
-    
-}
- 
- 
- 
-void do_assignString(char* target,MyString* p[],const int count){
-    char s [2][53] = {0};
-    char s2 [2][22] = {0};
-    char delim[] = "\"";
-    char delim1 []= " ";
-    split(target,s,delim);
-    split(s[0],s2,delim1);
-     
-    for(int j = 0 ; j < count ; j++){
-        if(strcmp(p[j]->name,s2[1]) == 0){
-            p[j]->assign(s[1]);
-        }
-    }
-}
-void do_find(char* target,MyString* p[],const int count){
-    char s [4][22] = {0};
-    char delim[] = " ";
-    split(target,s,delim);
-    for(int j = 0 ; j < count ; j++){
-        if(strcmp(p[j]->name,s[1]) == 0){
-            int f = 0;
-            f = p[j]->find(s[2][0],atoi(s[3]));
-            cout << f <<endl;
-        }
-    }
-     
-}
-void do_length(char* target,MyString* p[],const int count){
-    char s [2][22] = {0};
-    char delim[] = " ";
-    split(target,s,delim);
-     
-    for(int j = 0 ; j < count ; j++){
-        if(strcmp(p[j]->name,s[1]) == 0){
-            cout << p[j]->length() << endl;
-        }
-    }
-     
-} 
-MyString do_copy(char* target,MyString* p[],const int count){
-    char s [3][22] = {0};
-    char delim[] = " ";
-    split(target,s,delim);
-     
-    MyString t;
-    for(int j = 0 ; j < count ; j++){
-        if(strcmp(p[j]->name,s[2])==0){
-            t.assign(p[j]->getStr()); 
-        }
-    }
-    t.setname(s[1]);
-    return t;
-}
-MyString do_declare(char* target){
-    char s [2][53] = {0};
-    char s2 [2][22] = {0};
-    char delim[] = "\"";
-    char delim1 []= " ";
-    split(target,s,delim);
-    split(s[0],s2,delim1);
-     
-    MyString t(s[1]);
-    t.setname(s2[1]);
-     
-    return t;
-}
- 
- 
-void split(char* target,char s[][53],char delim[]){
-    int wordCnt = 0;
-    char* start = strtok(target, delim);
-    while(start != nullptr)
-    {
-        strcpy(s[wordCnt], start);
-        wordCnt++;
-        start = strtok(nullptr, delim);
-    }
-}
- 
- 
-void split(char* target,char s2[][22],char delim[]){
-    int cnt = 0;
-    char* start = strtok(target," ");
-    while(start != nullptr)
-    {
-        strcpy(s2[cnt], start);
-        cnt++;
-        start = strtok(nullptr, " ");
-    }
-}
-
