@@ -7,12 +7,15 @@
 using namespace std ;
 
 
-
-const int NAME_LEN = 21; 
-char name[] = "NO_NAME";
-const int Leaderboard_num = 4;
-int score = 25;
-
+// ---------2018/1/2---------
+const int NAME_LEN = 21; //取名字的長度
+char name[] = "NO_NAME"; // default name
+const int Leaderboard_num = 4; //排行榜上的人數
+int score = 0; // default score
+void gameover();//結束遊戲
+void Leaderboard(char c[][NAME_LEN],int s[]); // 製作排行榜
+void Clr();//清除頁面
+// -----------------------------
 const int N = 23;
 
 struct Point {
@@ -26,8 +29,7 @@ char   room[N][N*2+4];                      //房間
 int    delay_time = 100;                    //延遲時間
 int    x1=2,y1=1,x2=(N-1)*2,y2=N-1, len=2;  //房間邊界, 身長
 bool   bExit = false;                       //是否持續遊戲
-void gameover();
-void Leaderboard(char c[][NAME_LEN],int s[]);
+
 void gotoxy (int x, int y)
 {
     static COORD c;  
@@ -87,9 +89,7 @@ void move_snack()
             body[0].y == body[i].y ) break;
 
     if (i!=len || x<=x1 || x>x2 || y<=y1 || y>y2) {
-//        draw (14,10,"G a m e    O v e r");
-//        getch(); bExit = true;
-        gameover();
+        gameover();//2018/1/2--------------------------------------
 		return;
     }
     if (x == cookie.x && y == cookie.y) {   //吃到食物
@@ -157,8 +157,6 @@ void init()
     body[1].set (body[0].x+1, body[0].y);
 }
 
-//void Leaderboard(char c[][NAME_LEN],int s[]);
-
 void Leaderboard(char c[][NAME_LEN],int s[]){
 	FILE *fin,*fout;
     //讀檔 
@@ -197,10 +195,7 @@ void Leaderboard(char c[][NAME_LEN],int s[]){
         printf("T_T\n");
         return ;
     }
-    fscanf(fin, "%s%d%s%d%s%d%s%d",c[0],&s[0],c[1],&s[1],c[2],&s[2],c[3],&s[3]);
- 
-//    printf("%s %d\n%s %d\n%s %d\n%s %d\n",c[0],s[0],c[1],s[1],c[2],s[2],c[3],s[3]);
-    
+    fscanf(fin, "%s%d%s%d%s%d%s%d",c[0],&s[0],c[1],&s[1],c[2],&s[2],c[3],&s[3]);    
 	fclose(fin);
 }
 
