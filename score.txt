@@ -1,4 +1,4 @@
-player1 0
-player2 50
-player3 40
-player4 10
+p1 27
+p2 26
+HELLO 25
+io 25

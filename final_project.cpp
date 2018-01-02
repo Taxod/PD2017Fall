@@ -8,6 +8,11 @@ using namespace std ;
 
 
 
+const int NAME_LEN = 21; 
+char name[] = "NO_NAME";
+const int Leaderboard_num = 4;
+int score = 25;
+
 const int N = 23;
 
 struct Point {
@@ -22,6 +27,7 @@ int    delay_time = 100;                    //延遲時間
 int    x1=2,y1=1,x2=(N-1)*2,y2=N-1, len=2;  //房間邊界, 身長
 bool   bExit = false;                       //是否持續遊戲
 void gameover();
+void Leaderboard(char c[][NAME_LEN],int s[]);
 void gotoxy (int x, int y)
 {
     static COORD c;  
@@ -34,7 +40,11 @@ void draw (int x, int y, char* s)
     gotoxy (x,y);
     cout << s;
 }
-
+void draw (int x, int y, int s)
+{
+    gotoxy (x,y);
+    cout << s;
+}
 void drawList (char* a, char* b, char* c, int w, int h=1)
 {
     static char* p = room[0];
@@ -146,19 +156,71 @@ void init()
     body[0].set ((x2-x1)/2, (y2-y1)/2);
     body[1].set (body[0].x+1, body[0].y);
 }
-char name[101] = {0};
+
+//void Leaderboard(char c[][NAME_LEN],int s[]);
+
+void Leaderboard(char c[][NAME_LEN],int s[]){
+	FILE *fin,*fout;
+    //讀檔 
+	fin = fopen("score.txt", "r");
+    if (!fin) {
+        printf("T_T\n");
+        return ;
+    }
+    fscanf(fin, "%s%d%s%d%s%d%s%d",c[0],&s[0],c[1],&s[1],c[2],&s[2],c[3],&s[3]);
+ 
+	fclose(fin);
+	int temp[Leaderboard_num] = {0};
+	char tmp[Leaderboard_num][NAME_LEN] = {0};
+	for(int i = 0 ; i < Leaderboard_num ; i++){
+		temp[i] = s[i];
+		strcpy(tmp[i],c[i]);
+	}
+	for(int i = 0 ; i < Leaderboard_num ; i++){
+		if( score >= s[i]){
+			s[i] = score;
+			strcpy(c[i],name);
+			for(int j = i+1 ; j < Leaderboard_num ; j++){
+				s[j] = temp[j-1];
+				strcpy(c[j],tmp[j-1]);
+			}
+			break;
+		}
+		
+	}
+	//寫檔 
+	fout = fopen("score.txt","w");
+	fprintf(fout,"%s %d\n%s %d\n%s %d\n%s %d\n",c[0],s[0],c[1],s[1],c[2],s[2],c[3],s[3]);
+	fclose(fout);
+	fin = fopen("score.txt", "r");
+    if (!fin) {
+        printf("T_T\n");
+        return ;
+    }
+    fscanf(fin, "%s%d%s%d%s%d%s%d",c[0],&s[0],c[1],&s[1],c[2],&s[2],c[3],&s[3]);
+ 
+//    printf("%s %d\n%s %d\n%s %d\n%s %d\n",c[0],s[0],c[1],s[1],c[2],s[2],c[3],s[3]);
+    
+	fclose(fin);
+}
 
 void gameover(){//結束遊戲頁面 
+	char c[Leaderboard_num][NAME_LEN] = {0};
+    int s[Leaderboard_num];
 	Clr();
-	draw (20,8,name);
-	draw (14,10,"G a m e    O v e r");
-	draw (14,15,"Score:");
-    getch(); 
+	Leaderboard(c,s);
+	draw (14,7,"G a m e    O v e r");
+	draw (14,10,"Score:");
+    cout << score;
+    draw (14,12,"LEADER BOARD");
+    for(int i = 0 ; i < Leaderboard_num ; i++){
+		draw (14,14+i*2,c[i]);
+		draw (20,14+i*2,s[i]);	
+	}
+	getch(); 
 	bExit = true;
-//    cout << name;
-//    cout << score;         最後顯示成績 
 }
-void first_page(){
+void first_page(){//第一頁 
 	srand (time(0));
     hOut = GetStdHandle (STD_OUTPUT_HANDLE);
     hIn  = GetStdHandle (STD_INPUT_HANDLE);
@@ -174,49 +236,20 @@ void first_page(){
     cin.getline(name,101);
     Clr();
 }
+
+
 int main ()
 {
-//	FILE *fPtr;
-	FILE *fin,*fout;
-//    char c1[20],c3[10], c5[20],c7[20];
-    char c[5][20] = {0};
-    int s[5]; 
-    fin = fopen("score.txt", "r");
-    if (!fin) {
-        printf("T_T\n");
-        return 0;
+	
+    first_page();
+    init();
+    while (!bExit)
+    {        
+        Sleep (delay_time); if (kbhit()) key_control();//kbhit檢查使用者是否輸入東西
+        draw (cookie.x, cookie.y, "◎");
+        move_snack();
+        Sleep (delay_time); if (kbhit()) key_control();            
+        gotoxy (10,24);
     }
-    fscanf(fin, "%s%d%s%d%s%d%s%d",c[0],&s[0],c[1],&s[1],c[2],&s[2],c[3],&s[3]);
- 
-    printf("%s %d\n%s %d\n%s %d\n%s %d\n",c[0],s[0],c[1],s[1],c[2],s[2],c[3],s[3]);
-    
-	fclose(fin);
-	cout << "--------------\n";
-	s[0] = 0;
-	fout = fopen("score.txt","w");
-
-	fprintf(fout,"%s %d\n%s %d\n%s %d\n%s %d\n",c[0],s[0],c[1],s[1],c[2],s[2],c[3],s[3]);
-
-	fclose(fout);
-	fin = fopen("score.txt", "r");
-    if (!fin) {
-        printf("T_T\n");
-        return 0;
-    }
-    fscanf(fin, "%s%d%s%d%s%d%s%d",c[0],&s[0],c[1],&s[1],c[2],&s[2],c[3],&s[3]);
- 
-    printf("%s %d\n%s %d\n%s %d\n%s %d\n",c[0],s[0],c[1],s[1],c[2],s[2],c[3],s[3]);
-    
-	fclose(fin);
-//    first_page();
-//    init();
-//    while (!bExit)
-//    {        
-//        Sleep (delay_time); if (kbhit()) key_control();//kbhit檢查使用者是否輸入東西
-//        draw (cookie.x, cookie.y, "◎");
-//        move_snack();
-//        Sleep (delay_time); if (kbhit()) key_control();            
-//        gotoxy (10,24);
-//    }
     return 0;
 }
